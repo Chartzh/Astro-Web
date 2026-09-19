@@ -1,0 +1,8 @@
+# Abaikan file kredensial asli
+secrets.h
+
+# Abaikan folder build Arduino
+build/
+.vscode/
+*.bin
+*.elf

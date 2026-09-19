@@ -1,0 +1,128 @@
+@import '@fontsource/space-grotesk/latin-300.css';
+@import '@fontsource/space-grotesk/latin-400.css';
+@import '@fontsource/space-grotesk/latin-500.css';
+@import '@fontsource/space-grotesk/latin-600.css';
+@import '@fontsource/space-grotesk/latin-700.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource/jetbrains-mono/latin-500.css';
+@import '@fontsource/jetbrains-mono/latin-700.css';
+@import 'tailwindcss';
+
+@theme {
+	--color-void: #000000;
+	--color-char: #121212;
+	--color-char-2: #1a1a1a;
+	--color-char-3: #262626;
+
+	--color-gold: #d4af37;
+	--color-gold-dim: #a8862a;
+	--color-brass: #b8860b;
+	--color-copper: #b87333;
+
+	--color-solder: #a0aab5;
+	--color-solder-dim: #6b7280;
+	--color-steel: #e5e7eb;
+
+	--color-oled: #2eb0ff;
+	--color-oled-dim: #14507a;
+
+	--font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+}
+
+@layer base {
+	html {
+		scroll-behavior: smooth;
+	}
+
+	body {
+		@apply bg-void text-solder font-mono antialiased;
+	}
+
+	::selection {
+		@apply bg-gold text-black;
+	}
+
+	/* Crosshair-style selection for brutalist flair */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: #3f3f3f #000;
+	}
+	*::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	*::-webkit-scrollbar-track {
+		background: #000;
+	}
+	*::-webkit-scrollbar-thumb {
+		background: #3f3f3f;
+		border: 2px solid #000;
+	}
+	*::-webkit-scrollbar-thumb:hover {
+		background: #d4af37;
+	}
+}
+
+@layer utilities {
+	/* Blueprint / grid-paper background */
+	.blueprint-grid {
+		background-image:
+			linear-gradient(to right, rgba(212, 175, 55, 0.05) 1px, transparent 1px),
+			linear-gradient(to bottom, rgba(212, 175, 55, 0.05) 1px, transparent 1px);
+		background-size: 32px 32px;
+	}
+
+	.blueprint-grid-dense {
+		background-image:
+			linear-gradient(to right, rgba(160, 170, 181, 0.06) 1px, transparent 1px),
+			linear-gradient(to bottom, rgba(160, 170, 181, 0.06) 1px, transparent 1px);
+		background-size: 16px 16px;
+	}
+
+	/* Scanline overlay for the OLED panel */
+	.oled-scanlines {
+		background-image: repeating-linear-gradient(
+			0deg,
+			rgba(255, 255, 255, 0.06) 0px,
+			rgba(255, 255, 255, 0.06) 1px,
+			transparent 1px,
+			transparent 3px
+		);
+	}
+
+	.text-glow-oled {
+		text-shadow: 0 0 6px rgba(46, 176, 255, 0.7);
+	}
+
+	/* Tactile solid button */
+	.btn-rivet {
+		position: relative;
+	}
+	.btn-rivet::before,
+	.btn-rivet::after {
+		content: '';
+		position: absolute;
+		width: 4px;
+		height: 4px;
+		border: 1px solid rgba(0, 0, 0, 0.5);
+		background: rgba(255, 255, 255, 0.1);
+	}
+	.btn-rivet::before {
+		top: 3px;
+		left: 3px;
+	}
+	.btn-rivet::after {
+		top: 3px;
+		right: 3px;
+	}
+
+	/* Hard striped hazard border (brutalist accent) */
+	.hazard-stripes {
+		background-image: repeating-linear-gradient(
+			-45deg,
+			#d4af37 0 10px,
+			#000 10px 20px
+		);
+	}
+}
