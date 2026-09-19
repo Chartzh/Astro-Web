@@ -13,10 +13,12 @@ export const HARDWARE_ENABLED = Boolean(HARDWARE_BASE);
 // instead of the local mock. Set VITE_GEMINI_API_KEY (and optionally
 // VITE_GEMINI_MODEL) to enable; otherwise the SIMULATOR mock is used.
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-// NOTE: the model name MUST be a real, currently-available Gemini model. The
-// previous default ("gemini-3.6-flash") does not exist and caused HTTP 400 on
-// every request. `gemini-2.0-flash` is a stable, non-"thinking" model.
-const GEMINI_MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-2.0-flash';
+// NOTE: the model name MUST be a currently-available Gemini model.
+// `gemini-3.6-flash` is the current stable flash model for this API region
+// (the API formally recommends it). Older names like gemini-2.0-flash are
+// retired and return HTTP 404. Override via VITE_GEMINI_MODEL.
+const GEMINI_MODEL =
+	(import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-3.6-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 export const GEMINI_ENABLED = Boolean(GEMINI_API_KEY);
 
