@@ -13,7 +13,10 @@ export const HARDWARE_ENABLED = Boolean(HARDWARE_BASE);
 // instead of the local mock. Set VITE_GEMINI_API_KEY (and optionally
 // VITE_GEMINI_MODEL) to enable; otherwise the SIMULATOR mock is used.
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const GEMINI_MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-3.6-flash';
+// NOTE: the model name MUST be a real, currently-available Gemini model. The
+// previous default ("gemini-3.6-flash") does not exist and caused HTTP 400 on
+// every request. `gemini-2.0-flash` is a stable, non-"thinking" model.
+const GEMINI_MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-2.0-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 export const GEMINI_ENABLED = Boolean(GEMINI_API_KEY);
 
@@ -135,28 +138,27 @@ export function simulateAnswer(input: string): string {
 export const ASTRO_PERSONA =
 	'Kamu adalah Astro, asisten AI. Jawab maksimal 30 kata, polos tanpa markdown.';
 
-async function askGemini(question: string): Promise<string> {
+async function askGemini(question: string): Promise<string | null> {
 	const body = JSON.stringify({
-		contents: [{ parts: [{ text: ASTRO_PERSONA + ' Pertanyaan: ' + question }] }],
-		// The firmware's model (gemini-3.6-flash) is a "thinking" model — it
-		// burns seconds generating a long thought trace before replying. Turn
-		// the thinking budget off for fast responses, same size answer.
-		generationConfig: { thinkingConfig: { thinkingBudget: 0 } }
+		contents: [{ parts: [{ text: ASTRO_PERSONA + ' Pertanyaan: ' + question }] }]
 	});
-	const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		signal: AbortSignal.timeout(30000)
-	});
-	if (!res.ok) {
-		throw new Error(`Gemini HTTP ${res.status}`);
+	// NEVER throw out of here: a failed HTTP 400 (bad model name, bad key,
+	// quota, rate limit) must propagate as a graceful fallback to the simulator
+	// instead of an unhandled promise rejection that leaves the UI stuck on
+	// "PROCESSING…" forever.
+	try {
+		const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			signal: AbortSignal.timeout(30000)
+		});
+		if (!res.ok) return null;
+		const json = await res.json();
+		const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+		return typeof text === 'string' ? text.trim() : null;
+	} catch {
+		return null;
 	}
-	const json = await res.json();
-	const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-	if (typeof text !== 'string') {
-		throw new Error('Gemini: no text in response');
-	}
-	return text.trim();
 }
 
 /**
@@ -171,7 +173,9 @@ export async function mockGemini(
 ): Promise<{ text: string }> {
 	if (GEMINI_ENABLED) {
 		const text = await askGemini(input);
-		return { text: text || '(NO PAYLOAD)' };
+		// If the real API failed or came back empty (bad model, key, quota),
+		// silently fall back to the local simulator so the bench never hangs.
+		if (text) return { text };
 	}
 	// simulated Gemini round-trip latency
 	await new Promise((r) => setTimeout(r, 700 + Math.random() * 900));

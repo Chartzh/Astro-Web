@@ -68,35 +68,45 @@
 		taskInput = q;
 		push('tx', `> ${q}`);
 		if (viaVoice) push('sys', 'VOICE_OVERRIDE: SpeechRecognition input (id-ID)');
+		try {
+			// 1) ST_BUSY — querying the (mock) Gemini endpoint
+			oledState = 'busy';
+			lastQA = null;
+			push('sys', 'STATE → ST_BUSY // CORE1 AI handler active');
 
-		// 1) ST_BUSY — querying the (mock) Gemini endpoint
-		oledState = 'busy';
-		lastQA = null;
-		push('sys', 'STATE → ST_BUSY // CORE1 AI handler active');
+			const t0 = performance.now();
+			const { text } = await mockGemini(q);
+			const latency = Math.round(performance.now() - t0);
 
-		const t0 = performance.now();
-		const { text } = await mockGemini(q);
-		const latency = Math.round(performance.now() - t0);
+			// 2) ST_HAPPY for HAPPY_DURATION (1200ms)
+			oledState = 'happy';
+			push('sys', 'STATE → ST_HAPPY // response decoded');
+			push('rx', `< ${text}  (${latency})`);
+			lastQA = { q, a: text };
+			await sleep(1200);
 
-		// 2) ST_HAPPY for HAPPY_DURATION (1200ms)
-		oledState = 'happy';
-		push('sys', 'STATE → ST_HAPPY // response decoded');
-		push('rx', `< ${text}  (${latency})`);
-		lastQA = { q, a: text };
-		await sleep(1200);
+			// 3) ST_TALKING while speechSynthesis reads the answer
+			oledState = 'talking';
+			push('sys', 'STATE → ST_TALKING // TTS utterance');
+			speaking = true;
+			await speak(text);
+			speaking = false;
 
-		// 3) ST_TALKING while speechSynthesis reads the answer
-		oledState = 'talking';
-		push('sys', 'STATE → ST_TALKING // TTS utterance');
-		speaking = true;
-		await speak(text);
-		speaking = false;
-
-		// 4) back to idle
-		oledState = 'idle';
-		push('sys', 'STATE → ST_IDLE // standby');
-		taskInput = '';
-		busy = false;
+			// 4) back to idle
+			oledState = 'idle';
+			push('sys', 'STATE → ST_IDLE // standby');
+			taskInput = '';
+		} catch (err) {
+			// Safety net: a thrown error anywhere in the flow must reset the
+			// state machine so the bench never wedges on "PROCESSING…".
+			console.error('runCommand failed:', err);
+			oledState = 'idle';
+			speaking = false;
+			push('sys', 'STATE → ST_IDLE // ERR fallback');
+		} finally {
+			busy = false;
+			taskInput = '';
+		}
 	}
 
 	// ---- Web Speech API (VOICE OVERRIDE) -------------------------------
