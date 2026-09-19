@@ -14,7 +14,7 @@
 		Volume2
 	} from 'lucide-svelte';
 	import EyeVisualizer, { type OledState } from './EyeVisualizer.svelte';
-	import { mockGemini, speak, HARDWARE_ENABLED } from '$lib/hardware';
+	import { mockGemini, speak, HARDWARE_ENABLED, GEMINI_ENABLED } from '$lib/hardware';
 	import type { LogLine } from '$lib/types';
 
 	const logs: LogLine[] = $state([]);
@@ -23,7 +23,9 @@
 	let listening = $state(false);
 	let speaking = $state(false);
 	let taskInput = $state('');
-	let source = $state(HARDWARE_ENABLED ? 'LIVE_LINK' : 'SIM');
+	let source = $state(
+		HARDWARE_ENABLED ? 'LIVE_LINK' : GEMINI_ENABLED ? 'REAL_GEMINI' : 'SIM'
+	);
 
 	// Last Q/A — mirrored from the firmware's `handleAsk` flow, which shows the
 	// answer as a chat card on device ("Q:" + question, "A:" + answer).
@@ -186,7 +188,7 @@
 					title="Phase 2 local simulation of the on-device Gemini call"
 				>
 					<span class="h-1.5 w-1.5 bg-gold"></span>
-					MOCK_GEMINI · ONLINE
+					{source} · ONLINE
 				</span>
 			</div>
 		</div>
@@ -283,8 +285,9 @@
 						<p class="mt-2 font-mono text-[10px] tracking-wide text-solder-dim">
 							State flow: <span class="text-gold">ST_BUSY</span> →{' '}
 							<span class="text-gold">ST_HAPPY</span> →
-							<span class="text-oled">ST_TALKING</span> → ST_IDLE · mock Gemini API ·
-							VOICE uses SpeechRecognition (id-ID) + speechSynthesis
+							<span class="text-oled">ST_TALKING</span> → ST_IDLE ·
+							Gemini API (real or simulated) · VOICE uses
+							SpeechRecognition (id-ID) + speechSynthesis
 						</p>
 					</div>
 				</div>

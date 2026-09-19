@@ -8,6 +8,15 @@
 export const HARDWARE_BASE = import.meta.env.VITE_ASTRO_URL as string | undefined;
 export const HARDWARE_ENABLED = Boolean(HARDWARE_BASE);
 
+// Browser-side Gemini edge AI — a faithful port of the firmware's `askGemini()`
+// from Astro/Astro_M1_Web.ino so the Digital Twin answers with the real model
+// instead of the local mock. Set VITE_GEMINI_API_KEY (and optionally
+// VITE_GEMINI_MODEL) to enable; otherwise the SIMULATOR mock is used.
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+const GEMINI_MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-3.6-flash';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+export const GEMINI_ENABLED = Boolean(GEMINI_API_KEY);
+
 /**
  * Returns a 30 byte "NEEDLE" string scraped from the firmware page. Raw HTML
  * scraping is fragile, so we support two markers the firmware wraps the answer
@@ -118,14 +127,52 @@ export function simulateAnswer(input: string): string {
 }
 
 /**
+ * Faithful port of the firmware's `askGemini()` (Astro/Astro_M1_Web.ino).
+ * POSTs { contents:[{ parts:[{ text }] }] } to the Gemini generateContent
+ * endpoint and returns the trimmed candidate text. Cached so the mock fallback
+ * below can reuse the same persona string.
+ */
+export const ASTRO_PERSONA =
+	'Kamu adalah Astro, asisten AI. Jawab maksimal 30 kata, polos tanpa markdown.';
+
+async function askGemini(question: string): Promise<string> {
+	const body = JSON.stringify({
+		contents: [{ parts: [{ text: ASTRO_PERSONA + ' Pertanyaan: ' + question }] }],
+		// The firmware's model (gemini-3.6-flash) is a "thinking" model — it
+		// burns seconds generating a long thought trace before replying. Turn
+		// the thinking budget off for fast responses, same size answer.
+		generationConfig: { thinkingConfig: { thinkingBudget: 0 } }
+	});
+	const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		signal: AbortSignal.timeout(30000)
+	});
+	if (!res.ok) {
+		throw new Error(`Gemini HTTP ${res.status}`);
+	}
+	const json = await res.json();
+	const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+	if (typeof text !== 'string') {
+		throw new Error('Gemini: no text in response');
+	}
+	return text.trim();
+}
+
+/**
  * MOCK Gemini response. Simulates network latency the same way the real
  * firmware awaits the Gemini endpoint on-device, then returns a `{ text }`
- * payload. Drop a real fetch/getGenerativeModel call here to go live.
+ * payload. If VITE_GEMINI_API_KEY is set it calls the real Gemini API —
+ * mirroring askGemini() in the .ino — instead of the local simulation.
  */
 export async function mockGemini(
 	input: string,
 	persona: string = SIM_PERSONA
 ): Promise<{ text: string }> {
+	if (GEMINI_ENABLED) {
+		const text = await askGemini(input);
+		return { text: text || '(NO PAYLOAD)' };
+	}
 	// simulated Gemini round-trip latency
 	await new Promise((r) => setTimeout(r, 700 + Math.random() * 900));
 	return { text: simulateAnswer(input) };

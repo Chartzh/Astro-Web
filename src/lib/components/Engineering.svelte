@@ -49,10 +49,7 @@
 		{ src: '/assets/photos/detail-charger.jpg', caption: 'CHARGE RAIL // SWITCHING' },
 		{ src: '/assets/photos/workbench.jpg', caption: 'BENCH // FABRICATION' },
 		{ src: '/assets/photos/soldering1.jpg', caption: 'SOLDER 01 // FREE-FORM' },
-		{ src: '/assets/photos/soldering2.jpg', caption: 'SOLDER 02 // JOINT WORK' },
-		{ src: '/assets/photos/soldering3.jpg', caption: 'SOLDER 03 // CONNECTION' },
-		{ src: '/assets/logos/Astro_logo.png', caption: 'ASTRO // UNIT MARK' },
-		{ src: '/assets/logos/diagram.jpeg', caption: 'WIRING SCHEM // BASE-26' }
+		{ src: '/assets/photos/soldering2.jpg', caption: 'SOLDER 02 // JOINT WORK' }
 	];
 </script>
 
