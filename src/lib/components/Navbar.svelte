@@ -14,9 +14,11 @@
 	<div class="hazard-stripes h-1 w-full opacity-70"></div>
 	<nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
 		<a href="#top" class="group flex items-center gap-3">
-			<div class="btn-rivet flex h-9 w-9 items-center justify-center border border-gold bg-char">
-				<span class="font-mono text-lg font-bold text-gold">A</span>
-			</div>
+			<img
+				src="/assets/logos/Astro_logo.png"
+				alt="ASTRO"
+				class="btn-rivet h-9 w-9 border border-gold bg-char object-contain p-1"
+			/>
 			<div class="hidden sm:block">
 				<span class="font-mono text-xl font-bold tracking-[0.25em] text-gold">ASTRO</span>
 			</div>

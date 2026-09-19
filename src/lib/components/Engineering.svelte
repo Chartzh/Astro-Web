@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Terminal, Cpu, Server, Wrench, Circle } from 'lucide-svelte';
+	import { Terminal, Cpu, Server, Wrench, Cable, Circle } from 'lucide-svelte';
+	import { WIRING } from '$lib/wiring';
 
 	const modules = [
 		{
@@ -93,6 +94,74 @@
 					</div>
 				</article>
 			{/each}
+		</div>
+
+		<!-- ============ WIRING SCHEMATIC ============ -->
+		<div class="mt-12 border border-gold/25 bg-char">
+			<div class="flex items-center justify-between border-b border-gold/25 bg-black px-4 py-3">
+				<span class="flex items-center gap-2 font-mono text-[11px] tracking-widest text-gold-dim">
+					<Cable size={15} />
+					HARDWARE SPECS // WIRING SCHEMATIC
+				</span>
+				<span class="font-mono text-[10px] tracking-widest text-solder-dim">ASTRO_M1_WEB.INO</span>
+			</div>
+
+			<div class="grid gap-5 p-4 lg:grid-cols-2 lg:items-start">
+				<!-- Schematic image -->
+				<figure class="overflow-hidden border border-gold/20 bg-black">
+					<img
+						src="/assets/logos/diagram.jpeg"
+						alt="ASTRO M1 wiring diagram"
+						loading="lazy"
+						class="w-full object-contain p-2"
+					/>
+					<figcaption class="flex items-center justify-between border-t border-gold/20 px-3 py-1.5 font-mono text-[9px] tracking-widest text-solder-dim">
+						<span>FIG.01 — WIRE DIAGRAM</span>
+						<span class="text-gold-dim">[SCHEM]</span>
+					</figcaption>
+				</figure>
+
+				<!-- Wiring table -->
+				<div class="overflow-x-auto">
+					<table class="w-full border-collapse font-mono text-[11px]">
+						<thead>
+							<tr class="border-b border-gold/25 text-left text-[9px] tracking-widest text-gold-dim">
+								<th class="py-2 pr-2 font-medium">SOURCE</th>
+								<th class="py-2 pr-2 font-medium">PIN</th>
+								<th class="py-2 pr-2 font-medium text-gold">WIRE</th>
+								<th class="py-2 pr-2 font-medium">TARGET</th>
+								<th class="py-2 pr-2 font-medium">PIN</th>
+								<th class="py-2 font-medium">NOTE</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each WIRING as row, i}
+								<tr class="border-b border-gold/10 align-top transition-colors hover:bg-gold/5">
+									<td class="py-1.5 pr-2 font-medium text-solder">{row.from}</td>
+									<td class="py-1.5 pr-2 text-solder-dim">{row.fromPin}</td>
+									<td class="py-1.5 pr-2">
+										<span class="flex items-center gap-1.5">
+											<span
+												class="inline-block h-1.5 w-1.5 border border-gold/40"
+												class:bg-red-500={row.wire === 'Merah'}
+												class:bg-black={row.wire === 'Hitam'}
+												class:bg-green-500={row.wire === 'Hijau Terang'}
+												class:bg-yellow-400={row.wire === 'Kuning/Oranye'}
+												class:bg-sky-400={row.wire === 'Biru Muda'}
+												class:bg-purple-500={row.wire === 'Ungu'}
+											></span>
+											<span class="text-solder-dim">{row.wire}</span>
+										</span>
+									</td>
+									<td class="py-1.5 pr-2 text-solder">{row.to}</td>
+									<td class="py-1.5 pr-2 text-solder-dim">{row.toPin}</td>
+									<td class="py-1.5 text-solder-dim">{row.note}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</div>
 
 		<!-- build log strip -->

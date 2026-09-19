@@ -10,20 +10,23 @@
 		Battery,
 		Power,
 		Loader2,
-		Circle
+		Circle,
+		Volume2
 	} from 'lucide-svelte';
-	import EyeVisualizer, { type EyeState } from './EyeVisualizer.svelte';
-	import { askHardware, simulateAnswer, HARDWARE_ENABLED } from '$lib/hardware';
+	import EyeVisualizer, { type OledState } from './EyeVisualizer.svelte';
+	import { mockGemini, speak, HARDWARE_ENABLED } from '$lib/hardware';
 	import type { LogLine } from '$lib/types';
-
-	const eye: EyeState = $state({ blink: false, shift: 'center' });
 
 	const logs: LogLine[] = $state([]);
 	let input = $state('');
 	let busy = $state(false);
 	let listening = $state(false);
+	let speaking = $state(false);
 	let taskInput = $state('');
 	let source = $state(HARDWARE_ENABLED ? 'LIVE_LINK' : 'SIM');
+
+	// OLED state machine — mirrors the firmware OledState enum.
+	let oledState = $state<OledState>('idle');
 
 	let id = 0;
 	function stamp(): string {
@@ -36,10 +39,6 @@
 	function push(dir: LogLine['dir'], text: string) {
 		logs.push({ id: id++, ts: stamp(), dir, text });
 	}
-	function fmtTh(t: number): string {
-		return t < 1000 ? `${t}ms` : `${(t / 1000).toFixed(1)}s`;
-	}
-
 	function sleep(ms: number) {
 		return new Promise((r) => setTimeout(r, ms));
 	}
@@ -48,69 +47,46 @@
 		push('sys', 'ASTRO.UPLINK v1.0 // channel 0x3C established');
 		push('sys', `${source} MODE — hand-soldered unit, copper chassis`);
 		push('sys', 'READY. Awaiting command sequence.');
-
-		const blinkInt = setInterval(() => {
-			eye.blink = true;
-			setTimeout(() => (eye.blink = false), 200);
-		}, 3800);
-		const shiftInt = setInterval(() => {
-			const seq = ['left', 'center', 'right', 'center'] as const;
-			eye.shift = seq[Math.floor(Math.random() * seq.length)];
-		}, 5200);
-
-		return () => {
-			clearInterval(blinkInt);
-			clearInterval(shiftInt);
-		};
 	});
 
-	async function transmit() {
+	function transmit() {
 		const q = input.trim();
 		if (!q || busy) return;
 		input = '';
-		await runCommand(q, { synth: false });
+		void runCommand(q, false);
 	}
 
-	async function runCommand(q: string, opts: { synth?: boolean } = {}) {
+	async function runCommand(q: string, viaVoice: boolean) {
+		if (busy) return;
 		busy = true;
 		taskInput = q;
 		push('tx', `> ${q}`);
-		if (opts.synth) push('sys', 'VOICE_OVERRIDE: SpeechRecognition input');
+		if (viaVoice) push('sys', 'VOICE_OVERRIDE: SpeechRecognition input (id-ID)');
 
-		eye.blink = true;
-		await sleep(120);
-		eye.blink = false;
+		// 1) ST_BUSY — querying the (mock) Gemini endpoint
+		oledState = 'busy';
+		push('sys', 'STATE → ST_BUSY // CORE1 AI handler active');
 
 		const t0 = performance.now();
+		const { text } = await mockGemini(q);
+		const latency = Math.round(performance.now() - t0);
 
-		let answer: string;
-		let latency = 320;
+		// 2) ST_HAPPY for HAPPY_DURATION (1200ms)
+		oledState = 'happy';
+		push('sys', 'STATE → ST_HAPPY // response decoded');
+		push('rx', `< ${text}  (${latency})`);
+		await sleep(1200);
 
-		if (source === 'LIVE_LINK') {
-			const res = await askHardware(q);
-			if (res.ok && res.answer) {
-				answer = res.answer;
-				latency = Math.round(performance.now() - t0);
-			} else {
-				source = 'SIM';
-				push('sys', 'LINK LOST — unit unreachable, dropping to local SIMULATOR');
-				answer = simulateAnswer(q);
-			}
-		} else {
-			await sleep(500 + Math.random() * 700);
-			answer = simulateAnswer(q);
-		}
+		// 3) ST_TALKING while speechSynthesis reads the answer
+		oledState = 'talking';
+		push('sys', 'STATE → ST_TALKING // TTS utterance');
+		speaking = true;
+		await speak(text);
+		speaking = false;
 
-		latency = Math.max(latency, Math.round(performance.now() - t0));
-
-		await sleep(200);
-		eye.blink = true;
-		await sleep(140);
-		eye.blink = false;
-
-		push('rx', `< ${answer}  (${latency})`);
-		push('sys', 'ACK. handler done.');
-
+		// 4) back to idle
+		oledState = 'idle';
+		push('sys', 'STATE → ST_IDLE // standby');
 		taskInput = '';
 		busy = false;
 	}
@@ -130,7 +106,7 @@
 			recognition.maxAlternatives = 1;
 			recognition.onresult = (e: any) => {
 				const text = e.results[0][0].transcript as string;
-				runCommand(text, { synth: true });
+				void runCommand(text, true);
 			};
 			recognition.onend = () => (listening = false);
 			recognition.onerror = () => (listening = false);
@@ -155,7 +131,7 @@
 
 	// ---- Fake telemetry ---------------------------------------------------
 	const telemetry = $state({
-		core0: 50,
+		core0: 46,
 		core1: 0,
 		mem: 2.0,
 		cpu: 43,
@@ -171,8 +147,8 @@
 	]);
 
 	function randomizeTelemetry() {
-		telemetry.cpu = 38 + Math.floor(Math.random() * 22);
-		telemetry.core0 = 46 + Math.floor(Math.random() * 10);
+		telemetry.core0 = oledState === 'busy' ? 94 : 38 + Math.floor(Math.random() * 22);
+		telemetry.cpu = oledState === 'busy' ? 98 : 38 + Math.floor(Math.random() * 22);
 		telemetry.wifi = -56 + Math.floor(Math.random() * 6);
 		telemetry.batt = Math.max(72, telemetry.batt - (Math.random() < 0.2 ? 1 : 0));
 	}
@@ -191,20 +167,20 @@
 			<div>
 				<div class="mb-2 flex items-center gap-2 font-mono text-[11px] tracking-widest text-gold-dim">
 					<SquareTerminal size={14} />
-					CORE FEATURE // LIVE UNIT
+					CORE FEATURE // PUBLIC SIMULATOR
 				</div>
 				<h2 class="font-sans text-2xl font-bold tracking-tight text-steel sm:text-3xl">
 					DIGITAL TWIN
-					<span class="text-gold">_TEST_BENCH</span>
+					<span class="text-gold">_SIMULATOR</span>
 				</h2>
 			</div>
 			<div class="flex items-center gap-3 font-mono text-[11px] tracking-widest">
 				<span
 					class="flex items-center gap-2 border border-solder/30 bg-black px-3 py-1.5"
-					title={source === 'LIVE_LINK' ? 'Physical unit connected' : 'Simulation mode'}
+					title="Phase 2 local simulation of the on-device Gemini call"
 				>
-					<span class:hazard={source === 'LIVE_LINK'} class="h-1.5 w-1.5 bg-solder"></span>
-					{source === 'LIVE_LINK' ? 'LIVE · LINKED' : 'SIM · OFFLINE'}
+					<span class="h-1.5 w-1.5 bg-gold"></span>
+					MOCK_GEMINI · ONLINE
 				</span>
 			</div>
 		</div>
@@ -220,19 +196,26 @@
 							OLED // SSD1306 128x64 @ 0x3C
 						</span>
 						<div class="flex items-center gap-1.5 font-mono text-[10px] text-solder-dim">
-							<span class={busy ? 'text-gold' : ''}>{busy ? 'PROCESSING…' : 'STANDBY'}</span>
+							<span class={speaking ? 'text-oled' : busy ? 'text-gold' : ''}>
+								{#if speaking}
+									<span class="flex items-center gap-1"><Volume2 size={10} /> SPEAKING</span>
+								{:else if busy}
+									PROCESSING…
+								{:else}
+									STANDBY
+								{/if}
+							</span>
 							<span class="flex gap-1">
 								<span class="h-1.5 w-1.5 border border-gold-dim"></span>
 								<span class="h-1.5 w-1.5 border border-gold-dim"></span>
 							</span>
 						</div>
 					</div>
-					<EyeVisualizer state={eye} />
+					<EyeVisualizer mode={oledState} />
 					<!-- LCD status strip -->
 					<div class="border-t border-gold/25 px-3 py-2 font-mono text-[11px] text-solder-dim">
-						<span class="text-oled text-glow-oled">ASTRO&gt;</span> {taskInput && busy
-						? taskInput
-						: '— system idle —'}
+						<span class="text-oled text-glow-oled">ASTRO&gt;</span>{' '}
+						{taskInput ? taskInput : busy ? '— synchronizing —' : '— system idle —'}
 					</div>
 				</div>
 
@@ -242,13 +225,7 @@
 						COM_CH // CONTROL BUS
 					</div>
 					<div class="p-3">
-						<form
-							class="flex flex-col gap-2 sm:flex-row"
-							onsubmit={(e) => {
-								e.preventDefault();
-								transmit();
-							}}
-						>
+						<form class="flex flex-col gap-2 sm:flex-row" onsubmit={(e) => { e.preventDefault(); transmit(); }}>
 							<input
 								bind:value={input}
 								type="text"
@@ -277,12 +254,14 @@
 								class="btn-rivet flex items-center justify-center gap-2 border border-solder bg-transparent px-5 py-2.5 font-mono text-xs font-bold tracking-widest text-solder transition-colors hover:border-gold hover:text-gold"
 							>
 								<Mic size={14} />
-								VOICE OVERRIDE
+								MIC
 							</button>
 						</form>
 						<p class="mt-2 font-mono text-[10px] tracking-wide text-solder-dim">
-							TX bus POST > GET <span class="text-gold">/ask?q=[…]</span> · latency
-							reported per message · VOICE uses SpeechRecognition (id-ID)
+							State flow: <span class="text-gold">ST_BUSY</span> →{' '}
+							<span class="text-gold">ST_HAPPY</span> →
+							<span class="text-oled">ST_TALKING</span> → ST_IDLE · mock Gemini API ·
+							VOICE uses SpeechRecognition (id-ID) + speechSynthesis
 						</p>
 					</div>
 				</div>
@@ -364,12 +343,7 @@
 			</div>
 			<div class="h-64 overflow-y-auto p-3 font-mono text-[12px] leading-relaxed" role="log" aria-live="polite">
 				{#each logs as line (line.id)}
-					<div
-						class:tx={line.dir === 'tx'}
-						class:rx={line.dir === 'rx'}
-						class:sys={line.dir === 'sys'}
-						class="animate-log-in py-0.5"
-					>
+					<div class:tx={line.dir === 'tx'} class:rx={line.dir === 'rx'} class:sys={line.dir === 'sys'} class="animate-log-in py-0.5">
 						<span class="text-solder-dim">[{line.ts}]</span>{' '}
 						{#if line.dir === 'tx'}
 							<span class="text-gold">{line.text}</span>
@@ -380,7 +354,7 @@
 						{/if}
 					</div>
 				{/each}
-				{#if busy}
+				{#if busy && !speaking}
 					<div class="flex items-center gap-1 py-0.5 font-mono text-[12px] text-solder-dim">
 						<Loader2 size={12} class="animate-spin text-gold" /> PROCESSING…
 					</div>

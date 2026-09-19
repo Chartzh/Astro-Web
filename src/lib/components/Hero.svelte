@@ -1,32 +1,5 @@
 <script lang="ts">
 	import { Terminal, FileText } from 'lucide-svelte';
-
-	const moonland = String.raw`
-              .                        *
-           ."   ",
-          :       :
-   _.._   :       :   _.._
- .'    '. ':     :' .'    '.
- |      | '·,#####,·' |      |
- |      |   :'    ':   |      |
- |      |   :  uu  :   |      |
- |  <>  |   :  ww  :   |  <>  |
- |      |   '.     .'   |      |
- |      |     """       |      |
- '.____."     | |       '.____.'
-   |    |  |   | |   |  |    |
-   |    |  |===|=|===|  |    |
-   '----'  |_____|_____|  '----'
-           |  '.   '  |
-       [REACTOR]        [FUEL]
-      '"""""""'       '"""""""'
-        [STATE:  ]
-       '"""""""'
-  ._________________________________.
-  |  ASTRO  // LUNAR CHASSIS M1      |
-  |  COPPER WIRE  //  ESP32-S3       |
-  '_________________________________'
-`;
 </script>
 
 <section id="top" class="relative overflow-hidden border-b border-gold/30">
@@ -81,10 +54,33 @@
 			</div>
 		</div>
 
-		<pre
-			class="hidden select-none overflow-hidden border border-gold/20 bg-black/70 p-4 font-mono text-[11px] leading-tight text-solder-dim lg:block"
-			aria-label="Blueprint of a moon lander"
-		><code>{moonland}
-</code></pre>
+		<div class="relative flex items-center justify-center">
+			<!-- Blueprint targeting rings behind the robot -->
+			<div class="absolute h-80 w-80 rounded-full border border-gold/15 sm:h-96 sm:w-96"></div>
+			<div class="absolute h-64 w-64 rounded-full border border-dashed border-gold/20 sm:h-80 sm:w-80"></div>
+			<div class="absolute h-48 w-48 rounded-full border border-gold/15"></div>
+			<div class="absolute inset-0 flex items-center justify-center">
+				<span class="mx-auto block h-px w-1/2 bg-gold/15"></span>
+			</div>
+			<div class="absolute inset-0 flex items-center justify-center">
+				<span class="mx-auto block h-px w-1/2 rotate-90 bg-gold/15"></span>
+			</div>
+
+			<div class="blueprint-grid absolute inset-0 opacity-40"></div>
+
+			<img
+				src="/assets/logos/Front-side-transparent.png"
+				alt="ASTRO bare-wire robot chassis"
+				class="relative z-10 h-[340px] w-auto object-contain drop-shadow-[0_0_24px_rgba(212,175,55,0.08)] sm:h-[460px]"
+			/>
+
+			<!-- spec tags -->
+			<div class="absolute top-2 left-0 z-20 border border-gold/30 bg-black/80 px-2 py-1 font-mono text-[9px] tracking-widest text-solder-dim">
+				2026-0911 // CHASSIS
+			</div>
+			<div class="absolute right-0 bottom-6 z-20 border border-gold/30 bg-black/80 px-2 py-1 font-mono text-[9px] tracking-widest text-gold-dim">
+				FREE-FORM / NO PCB
+			</div>
+		</div>
 	</div>
 </section>

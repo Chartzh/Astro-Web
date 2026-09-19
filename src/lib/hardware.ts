@@ -117,5 +117,44 @@ export function simulateAnswer(input: string): string {
 	return pool[Math.floor(Math.random() * pool.length)];
 }
 
+/**
+ * MOCK Gemini response. Simulates network latency the same way the real
+ * firmware awaits the Gemini endpoint on-device, then returns a `{ text }`
+ * payload. Drop a real fetch/getGenerativeModel call here to go live.
+ */
+export async function mockGemini(
+	input: string,
+	persona: string = SIM_PERSONA
+): Promise<{ text: string }> {
+	// simulated Gemini round-trip latency
+	await new Promise((r) => setTimeout(r, 700 + Math.random() * 900));
+	return { text: simulateAnswer(input) };
+}
+
+/**
+ * Text-to-speech for the ST_TALKING phase. Uses the SpeechSynthesis API with
+ * a matching voice (Indonesian if available). Cancels any previous utterance.
+ */
+export function speak(text: string): Promise<void> {
+	return new Promise((resolve) => {
+		const synth = window.speechSynthesis;
+		if (!synth) {
+			resolve();
+			return;
+		}
+		synth.cancel();
+		const u = new SpeechSynthesisUtterance(text);
+		u.lang = 'id-ID';
+		u.rate = 1.05;
+		u.pitch = 1.1;
+		const voices = synth.getVoices();
+		const id = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('id'));
+		if (id) u.voice = id;
+		u.onend = () => resolve();
+		u.onerror = () => resolve();
+		synth.speak(u);
+	});
+}
+
 export const SIM_PERSONA =
 	'Kamu adalah Astro, asisten AI kecil di meja pemilikmu. Jawab santai dalam Bahasa Indonesia, maksimal 40 kata, polos tanpa markdown.';
