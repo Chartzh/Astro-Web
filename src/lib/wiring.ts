@@ -1,4 +1,4 @@
-// Wiring schematic derived from `diagram.md`.
+// Wiring schematic derived from `diagram.md` (all fields kept in English).
 export interface WiringRow {
 	from: string;
 	fromPin: string;
@@ -10,99 +10,99 @@ export interface WiringRow {
 
 export const WIRING: WiringRow[] = [
 	{
-		from: 'Baterai 16340',
-		fromPin: 'Positif (+)',
-		wire: 'Merah',
+		from: '16340 Battery',
+		fromPin: 'Positive (+)',
+		wire: 'Red',
 		to: 'TP4056 Module',
 		toPin: 'B+',
-		note: 'Suplai daya utama baterai'
+		note: 'Main battery power feed'
 	},
 	{
-		from: 'Baterai 16340',
-		fromPin: 'Negatif (-)',
-		wire: 'Hitam',
+		from: '16340 Battery',
+		fromPin: 'Negative (-)',
+		wire: 'Black',
 		to: 'TP4056 Module',
 		toPin: 'B-',
-		note: 'Ground baterai'
+		note: 'Battery ground'
 	},
 	{
 		from: 'TP4056 Module',
 		fromPin: 'OUT-',
-		wire: 'Hitam',
-		to: 'Sistem (Ground)',
-		toPin: 'Titik Ground (Sasis)',
-		note: 'Jalur Ground utama (kawat tembaga)'
+		wire: 'Black',
+		to: 'System (Ground)',
+		toPin: 'Chassis Ground Point',
+		note: 'Main ground rail (copper wire)'
 	},
 	{
 		from: 'TP4056 Module',
 		fromPin: 'OUT+',
-		wire: 'Hijau Terang',
-		to: 'Saklar (Switch)',
-		toPin: 'Pin Input',
-		note: 'Jalur positif daya dari modul'
+		wire: 'Bright Green',
+		to: 'Switch',
+		toPin: 'Input Pin',
+		note: 'Positive rail from module'
 	},
 	{
-		from: 'Saklar (Switch)',
-		fromPin: 'Pin Output',
-		wire: 'Hijau Terang',
+		from: 'Switch',
+		fromPin: 'Output Pin',
+		wire: 'Bright Green',
 		to: 'ESP32-S3',
 		toPin: '5V',
-		note: 'Menyuplai daya ke ESP32 saat saklar ON'
+		note: 'Feeds power to ESP32 when switch is ON'
 	},
 	{
 		from: 'ESP32-S3',
 		fromPin: 'GND',
-		wire: 'Hitam',
-		to: 'Sistem (Ground)',
-		toPin: 'Titik Ground (Sasis)',
-		note: 'Terhubung ke kawat tembaga (GND)'
+		wire: 'Black',
+		to: 'System (Ground)',
+		toPin: 'Chassis Ground Point',
+		note: 'Connected to copper wire (GND)'
 	},
 	{
 		from: 'ESP32-S3',
 		fromPin: '3V3',
-		wire: 'Kuning/Oranye',
+		wire: 'Yellow/Orange',
 		to: 'OLED SSD1306',
 		toPin: 'VCC',
-		note: 'Suplai daya 3.3V untuk layar OLED'
+		note: '3.3V supply for OLED screen'
 	},
 	{
-		from: 'Sistem (Ground)',
-		fromPin: 'Titik Ground',
-		wire: 'Hitam',
+		from: 'System (Ground)',
+		fromPin: 'Ground Point',
+		wire: 'Black',
 		to: 'OLED SSD1306',
 		toPin: 'GND',
-		note: 'Ground layar OLED'
+		note: 'OLED screen ground'
 	},
 	{
 		from: 'ESP32-S3',
 		fromPin: 'PIN 9',
-		wire: 'Biru Muda',
+		wire: 'Light Blue',
 		to: 'OLED SSD1306',
 		toPin: 'SCL',
-		note: 'Jalur I2C Clock'
+		note: 'I2C Clock line'
 	},
 	{
 		from: 'ESP32-S3',
 		fromPin: 'PIN 8',
-		wire: 'Ungu',
+		wire: 'Purple',
 		to: 'OLED SSD1306',
 		toPin: 'SDA',
-		note: 'Jalur I2C Data'
+		note: 'I2C Data line'
 	},
 	{
 		from: 'ESP32-S3',
 		fromPin: 'PIN 10',
-		wire: 'Merah',
+		wire: 'Red',
 		to: 'LED Filament/COB',
-		toPin: 'Positif (+)',
-		note: 'Melalui 2x Resistor'
+		toPin: 'Positive (+)',
+		note: 'Through 2x Resistors'
 	},
 	{
 		from: 'LED Filament/COB',
-		fromPin: 'Negatif (-)',
-		wire: 'Hitam',
-		to: 'Sistem (Ground)',
-		toPin: 'Titik Ground (Sasis)',
-		note: 'Ground LED'
+		fromPin: 'Negative (-)',
+		wire: 'Black',
+		to: 'System (Ground)',
+		toPin: 'Chassis Ground Point',
+		note: 'LED ground'
 	}
 ];

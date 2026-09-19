@@ -42,14 +42,17 @@
 	];
 
 	const photos = [
-		{ src: '/assets/logos/Front-transparent.png', caption: 'FACING VIEW // PIN-OUT' },
+		{ src: '/assets/photos/Front.jpg', caption: 'FRONT // CHASSIS' },
 		{ src: '/assets/photos/Front-side.jpg', caption: 'FRONT SIDE // CHASSIS' },
 		{ src: '/assets/photos/back-side.jpg', caption: 'REAR // REINFORCEMENT' },
 		{ src: '/assets/photos/detail-esp32.jpg', caption: 'SOC MOUNT // ESP32-S3' },
 		{ src: '/assets/photos/detail-charger.jpg', caption: 'CHARGE RAIL // SWITCHING' },
 		{ src: '/assets/photos/workbench.jpg', caption: 'BENCH // FABRICATION' },
 		{ src: '/assets/photos/soldering1.jpg', caption: 'SOLDER 01 // FREE-FORM' },
-		{ src: '/assets/photos/soldering3.jpg', caption: 'SOLDER 02 // JOINT WORK' }
+		{ src: '/assets/photos/soldering2.jpg', caption: 'SOLDER 02 // JOINT WORK' },
+		{ src: '/assets/photos/soldering3.jpg', caption: 'SOLDER 03 // CONNECTION' },
+		{ src: '/assets/logos/Astro_logo.png', caption: 'ASTRO // UNIT MARK' },
+		{ src: '/assets/logos/diagram.jpeg', caption: 'WIRING SCHEM // BASE-26' }
 	];
 </script>
 
@@ -143,12 +146,12 @@
 										<span class="flex items-center gap-1.5">
 											<span
 												class="inline-block h-1.5 w-1.5 border border-gold/40"
-												class:bg-red-500={row.wire === 'Merah'}
-												class:bg-black={row.wire === 'Hitam'}
-												class:bg-green-500={row.wire === 'Hijau Terang'}
-												class:bg-yellow-400={row.wire === 'Kuning/Oranye'}
-												class:bg-sky-400={row.wire === 'Biru Muda'}
-												class:bg-purple-500={row.wire === 'Ungu'}
+class:bg-red-500={row.wire === 'Red'}
+											class:bg-black={row.wire === 'Black'}
+											class:bg-green-500={row.wire === 'Bright Green'}
+											class:bg-yellow-400={row.wire === 'Yellow/Orange'}
+											class:bg-sky-400={row.wire === 'Light Blue'}
+											class:bg-purple-500={row.wire === 'Purple'}
 											></span>
 											<span class="text-solder-dim">{row.wire}</span>
 										</span>

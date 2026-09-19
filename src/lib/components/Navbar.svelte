@@ -6,7 +6,7 @@
 	const links = [
 		{ label: 'DOCUMENTATION', href: '#engineering', icon: Terminal },
 		{ label: 'TELEMETRY', href: '#testbench', icon: Activity },
-		{ label: 'DIAGNOSTICS', href: '#gallery', icon: Wrench }
+		{ label: 'CHASSIS GALLERY', href: '#gallery', icon: Wrench }
 	];
 </script>
 

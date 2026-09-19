@@ -25,6 +25,10 @@
 	let taskInput = $state('');
 	let source = $state(HARDWARE_ENABLED ? 'LIVE_LINK' : 'SIM');
 
+	// Last Q/A — mirrored from the firmware's `handleAsk` flow, which shows the
+	// answer as a chat card on device ("Q:" + question, "A:" + answer).
+	let lastQA = $state<{ q: string; a: string } | null>(null);
+
 	// OLED state machine — mirrors the firmware OledState enum.
 	let oledState = $state<OledState>('idle');
 
@@ -65,6 +69,7 @@
 
 		// 1) ST_BUSY — querying the (mock) Gemini endpoint
 		oledState = 'busy';
+		lastQA = null;
 		push('sys', 'STATE → ST_BUSY // CORE1 AI handler active');
 
 		const t0 = performance.now();
@@ -75,6 +80,7 @@
 		oledState = 'happy';
 		push('sys', 'STATE → ST_HAPPY // response decoded');
 		push('rx', `< ${text}  (${latency})`);
+		lastQA = { q, a: text };
 		await sleep(1200);
 
 		// 3) ST_TALKING while speechSynthesis reads the answer
@@ -215,8 +221,25 @@
 					<!-- LCD status strip -->
 					<div class="border-t border-gold/25 px-3 py-2 font-mono text-[11px] text-solder-dim">
 						<span class="text-oled text-glow-oled">ASTRO&gt;</span>{' '}
-						{taskInput ? taskInput : busy ? '— synchronizing —' : '— system idle —'}
+						{busy && !lastQA ? '— synchronizing —' : taskInput ? taskInput : '— system idle —'}
 					</div>
+					<!-- Live Q/A card — mirrors the firmware handleAsk chat output -->
+					{#if busy && !lastQA}
+						<div class="border-t border-gold/25 bg-black px-3 py-2 font-mono text-[11px] text-solder-dim">
+							<span class="flex items-center gap-2 text-gold">
+								<Loader2 size={11} class="animate-spin" />
+								ASTRO IS THINKING…
+							</span>
+							<span class="mt-1 block animate-pulse text-[10px] tracking-widest text-solder-dim">
+								STATE → ST_BUSY // CORE1 AI handler · squish/breath oled lock
+							</span>
+						</div>
+					{:else if lastQA}
+						<div class="border-t border-gold/25 bg-black px-3 py-2 font-mono">
+							<p class="text-[10px] tracking-widest text-gold-dim">Q: {lastQA.q}</p>
+							<p class="mt-1 text-[12px] leading-snug text-oled text-glow-oled">A: {lastQA.a}</p>
+						</div>
+					{/if}
 				</div>
 
 				<!-- CONTROLS -->
