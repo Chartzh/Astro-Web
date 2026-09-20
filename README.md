@@ -16,6 +16,27 @@ npm run dev
 Open the printed `localhost` URL. `npm run build` produces a static site in
 `build/` (SPA fallback via `@sveltejs/adapter-static`).
 
+## Phase 3 — Firmware Simulator (`/admin/simulator`)
+
+Lives behind the `/admin` **CONTROL TOWER** lock screen. A mock auth gate
+(hardcoded `VITE_ADMIN_PASSCODE`, default `ASTRO_ADMIN`) unlocks a tactical
+split-screen bench:
+
+- **Left — the IDE**: `monaco-editor` (VS Code engine) with C++ syntax,
+  preloaded with a `setup()` / `loop()` sketch, tuned to the ASTRO `astro-dark`
+  theme.
+- **Right — the Test Bench**: a Wokwi rig embed (set `VITE_WOKWI_PROJECT_URL`),
+  with **COMPILE & RUN** (gold) and **REBOOT** (outline) controls plus a raw
+  bench console. Without a project URL it renders a branded *RIG: OFFLINE*
+  placeholder.
+- **Bottom — Hardware Control Panel**: OTA deployment toggles for DIGITAL TWIN
+  vs PHYSICAL HARDWARE (routing logic is Phase-4, currently toggle mockups).
+
+> The admin passcode is checked **entirely in the browser** — UI mock only.
+> Swap in a real session (cookie / server-side check) before any public deploy.
+
+The monaco engine + workers lazy-load only when the simulator page opens.
+
 ## Phase 2 — Digital Twin simulator
 
 The Test Bench replicates the firmware's OLED state machine **one-to-one** from

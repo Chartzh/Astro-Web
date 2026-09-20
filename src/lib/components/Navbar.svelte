@@ -41,7 +41,7 @@
 
 		<div class="flex items-center gap-3">
 			<a
-				href="#testbench"
+				href="/admin"
 				class="btn-rivet hidden items-center gap-2 border border-gold bg-gold px-4 py-2 font-mono text-xs font-bold tracking-widest text-black transition-colors hover:bg-brass sm:flex"
 			>
 				<Lock size={13} />
@@ -74,7 +74,7 @@
 					</a>
 				{/each}
 				<a
-					href="#testbench"
+					href="/admin"
 					class="mt-3 mb-2 flex items-center justify-center gap-2 border border-gold bg-gold px-4 py-3 font-mono text-xs font-bold tracking-widest text-black"
 				>
 					<Lock size={13} />
