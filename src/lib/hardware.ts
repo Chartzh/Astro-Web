@@ -152,6 +152,7 @@ async function askGemini(question: string): Promise<string | null> {
 		const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
+			body,
 			signal: AbortSignal.timeout(30000)
 		});
 		if (!res.ok) return null;
